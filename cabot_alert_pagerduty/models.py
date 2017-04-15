@@ -44,8 +44,12 @@ class PagerdutyAlert(AlertPlugin):
 
         client = pygerduty.PagerDuty(subdomain, api_token)
 
-        description = 'Service: %s is %s' % (service.name,
-                                             service.overall_status)
+        description = 'Service: %s is %s. %s://%s/service/%s. Checks failing: %s' % (service.name,
+                                             service.overall_status,
+                                             settings.WWW_SCHEME,
+                                             settings.WWW_HTTP_HOST,
+                                             service.id,
+                                             service.all_failing_checks)
 
         incident_key = '%s/%d' % (service.name.lower().replace(' ', '-'),
                                   service.pk)
