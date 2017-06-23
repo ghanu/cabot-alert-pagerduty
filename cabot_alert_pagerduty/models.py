@@ -3,6 +3,7 @@ import logging
 import os
 import pygerduty
 
+from django.conf import settings
 from django.db import models
 from cabot.cabotapp.alert import AlertPlugin, AlertPluginUserData
 
@@ -75,6 +76,7 @@ class PagerdutyAlert(AlertPlugin):
                                             incident_key=incident_key)
             except Exception, exp:
                 logger.exception('Error invoking pagerduty: %s' % str(exp))
+                raise
 
     def _service_alertable(self, service):
         """ Evaluate service for alertable status """
