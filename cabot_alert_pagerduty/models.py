@@ -3,7 +3,6 @@ import logging
 import os
 import pygerduty
 
-from django.conf import settings
 from django.db import models
 from cabot.cabotapp.alert import AlertPlugin, AlertPluginUserData
 
@@ -47,8 +46,8 @@ class PagerdutyAlert(AlertPlugin):
 
         description = 'Service: %s is %s. %s://%s/service/%s. Checks failing: %s' % (service.name,
                                              service.overall_status,
-                                             settings.WWW_SCHEME,
-                                             settings.WWW_HTTP_HOST,
+                                             os.environ.get('WWW_HTTP_HOST'),
+                                             os.environ.get('WWW_SCHEME'),
                                              service.id,
                                              service.all_failing_checks)
 
