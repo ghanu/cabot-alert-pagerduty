@@ -44,12 +44,7 @@ class PagerdutyAlert(AlertPlugin):
 
         client = pygerduty.PagerDuty(subdomain, api_token)
 
-        description = 'Service: %s is %s %s://%s/service/%s Checks failing: %s' % (service.name,
-                                             service.overall_status,
-                                             os.environ.get('WWW_HTTP_HOST'),
-                                             os.environ.get('WWW_SCHEME'),
-                                             service.id,
-                                             service.all_failing_checks)
+        description = 'A disk is getting full on this machine. You should investigate what is causing the disk to fill, and ensure that there is an automated process in place for ensuring data is rotated (eg. logs should have logrotate around them). If data is expected to stay on this disk forever, you should start planning to scale up to a larger disk.'
 
         incident_key = '%s/%d' % (service.name.lower().replace(' ', '-'),
                                   service.pk)
