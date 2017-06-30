@@ -44,7 +44,7 @@ class PagerdutyAlert(AlertPlugin):
 
         client = pygerduty.PagerDuty(subdomain, api_token)
 
-        description = 'A disk is getting full on this machine. You should investigate what is causing the disk to fill, and ensure that there is an automated process in place for ensuring data is rotated (eg. logs should have logrotate around them). If data is expected to stay on this disk forever, you should start planning to scale up to a larger disk.'
+        description = 'A disk is getting full on this machine.'
 
         incident_key = '%s/%d' % (service.name.lower().replace(' ', '-'),
                                   service.pk)
@@ -59,18 +59,18 @@ class PagerdutyAlert(AlertPlugin):
                 if service_key:
                     service_keys.append(str(service_key))
 
-        for service_key in service_keys:
-            try:
-                if service.overall_status == service.PASSING_STATUS:
-                    client.resolve_incident(service_key,
-                                            incident_key)
-                else:
-                    client.trigger_incident(service_key,
-                                            description,
-                                            incident_key=incident_key)
-            except Exception, exp:
-                logger.exception('Error invoking pagerduty: %s' % str(exp))
-                raise
+        try:
+            logger.error('Service key is: %s' % api_token)
+            if service.overall_status == service.PASSING_STATUS:
+                client.resolve_incident(api_token,
+                                        incident_key)
+            else:
+                client.trigger_incident(api_token,
+                                        description,
+                                        incident_key=incident_key)
+        except Exception, exp:
+            logger.exception('Error invoking pagerduty: %s' % str(exp))
+            raise
 
     def _service_alertable(self, service):
         """ Evaluate service for alertable status """
