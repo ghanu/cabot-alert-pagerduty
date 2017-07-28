@@ -42,6 +42,11 @@ class PagerdutyAlert(AlertPlugin):
         api_token = os.environ.get('PAGERDUTY_API_TOKEN')
 
         client = pygerduty.PagerDuty(subdomain, api_token)
+        try:
+            description = 'Service: %s is %s %s://%s/service/%s Checks failing:' % (service.name,service.overall_status,os.environ.get('WWW_SCHEME'),os.environ.get('WWW_HTTP_HOST'),service.id)
+        except Exception, exp:
+            logger.exception('Error invoking pagerduty description: %s' % str(exp))
+            raise
 
         incident_key = '%s/%d' % (service.name.lower().replace(' ', '-'),
                                   service.pk)
@@ -49,6 +54,7 @@ class PagerdutyAlert(AlertPlugin):
         users = service.users_to_notify.all()
 
         service_keys = []
+        client.trigger_incident('46056193083c41d799ea1631381a161e', 'Testing message', incident_key=incident_key)
         for user in users:
             for plugin in user.profile.user_data():
                 service_key = getattr(plugin, 'service_key', None)
@@ -63,7 +69,7 @@ class PagerdutyAlert(AlertPlugin):
                                             incident_key)
                 else:
                     client.trigger_incident(service_key,
-                                            'Testing from own plugin',
+                                            description,
                                             incident_key=incident_key)
             except Exception, exp:
                 logger.exception('Error invoking pagerduty: %s' % str(exp))
