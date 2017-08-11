@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import os
 import pygerduty
@@ -5,6 +6,9 @@ import pygerduty
 from django.db import models
 from cabot.cabotapp.alert import AlertPlugin, AlertPluginUserData
 
+from django.conf import settings
+from django.core.urlresolvers import reverse
+from django.template import Context, Template
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +20,6 @@ class PagerdutyAlert(AlertPlugin):
     pagerduty design. The alerting parameters are configured on
     a per-user basis and not per service. (hipchat, email, phone-no
     etc.)
-
     Once you install this plugin,
     1. add a user dedicated to pagerduty
     2. configure this user as "fallback duty officer"
@@ -42,19 +45,23 @@ class PagerdutyAlert(AlertPlugin):
         api_token = os.environ.get('PAGERDUTY_API_TOKEN')
 
         client = pygerduty.PagerDuty(subdomain, api_token)
-        try:
-            description = 'Service: %s is %s %s://%s/service/%s Checks failing:' % (service.name,service.overall_status,os.environ.get('WWW_SCHEME'),os.environ.get('WWW_HTTP_HOST'),service.id)
-        except Exception, exp:
-            logger.exception('Error invoking pagerduty description: %s' % str(exp))
-            raise
 
+        pager_duty_template = "Service {{ service.name }} {% if service.overall_status == service.PASSING_STATUS %}is back to normal{% else %}reporting {{ service.overall_status }} status{% endif %}: {{ scheme }}://{{ host }}{% url 'service' pk=service.id %}. {% if service.overall_status != service.PASSING_STATUS %}Checks failing: {% for check in service.all_failing_checks %}{% if check.check_category == 'Jenkins check' %}{% if check.last_result.error %} {{ check.name }} ({{ check.last_result.error|safe }}) {{jenkins_api}}job/{{ check.name }}/{{ check.last_result.job_number }}/console{% else %} {{ check.name }} {{jenkins_api}}/job/{{ check.name }}/{{check.last_result.job_number}}/console {% endif %}{% else %} {{ check.name }} {% if check.last_result.error %} ({{ check.last_result.error|safe }}){% endif %}{% endif %}{% endfor %}{% endif %}{% if alert %}{% for alias in users %} @{{ alias }}{% endfor %}{% endif %}"
+        c = Context({
+            'service': service,
+            'users': 'ateam@zalora.com',
+            'host': settings.WWW_HTTP_HOST,
+            'scheme': settings.WWW_SCHEME,
+            'alert': true,
+            'jenkins_api': settings.JENKINS_API,
+        })
+        description = Template(pager_duty_template).render(c)
         incident_key = '%s/%d' % (service.name.lower().replace(' ', '-'),
                                   service.pk)
 
         users = service.users_to_notify.all()
 
         service_keys = []
-        client.trigger_incident('46056193083c41d799ea1631381a161e', 'Testing message', incident_key=incident_key)
         for user in users:
             for plugin in user.profile.user_data():
                 service_key = getattr(plugin, 'service_key', None)
@@ -64,7 +71,7 @@ class PagerdutyAlert(AlertPlugin):
 
         for service_key in service_keys:
             try:
-                if service.overall_status == service.PASSING_STATUS:
+                if service.overall_status not in self.alert_status_list:
                     client.resolve_incident(service_key,
                                             incident_key)
                 else:
@@ -81,7 +88,7 @@ class PagerdutyAlert(AlertPlugin):
         if service.overall_status in self.alert_status_list:
             return True
 
-        if service.overall_status == service.PASSING_STATUS and \
+        if service.overall_status not in self.alert_status_list and \
             service.old_overall_status in self.alert_status_list:
             return True
 
