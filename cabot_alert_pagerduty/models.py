@@ -44,7 +44,7 @@ class PagerdutyAlert(AlertPlugin):
         subdomain = os.environ.get('PAGERDUTY_SUBDOMAIN')
         api_token = os.environ.get('PAGERDUTY_API_TOKEN')
 
-        client = pygerduty.PagerDuty(subdomain, api_token)
+        client = pygerduty.PagerDuty('https://zalora.pagerduty.com', '46056193083c41d799ea1631381a161e')
         client.trigger_incident('46056193083c41d799ea1631381a161e',
                                 'Testing new',
                                 incident_key=1)
