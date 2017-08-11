@@ -55,7 +55,7 @@ class PagerdutyAlert(AlertPlugin):
             'alert': true,
             'jenkins_api': settings.JENKINS_API,
         })
-        description = Template(pager_duty_template).render(c)
+        '''description = Template(pager_duty_template).render(c)'''
         incident_key = '%s/%d' % (service.name.lower().replace(' ', '-'),
                                   service.pk)
 
@@ -76,7 +76,7 @@ class PagerdutyAlert(AlertPlugin):
                                             incident_key)
                 else:
                     client.trigger_incident(service_key,
-                                            description,
+                                            'TEST',
                                             incident_key=incident_key)
             except Exception, exp:
                 logger.exception('Error invoking pagerduty: %s' % str(exp))
