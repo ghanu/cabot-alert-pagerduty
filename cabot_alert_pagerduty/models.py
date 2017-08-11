@@ -45,7 +45,7 @@ class PagerdutyAlert(AlertPlugin):
         api_token = os.environ.get('PAGERDUTY_API_TOKEN')
 
         client = pygerduty.PagerDuty(subdomain, api_token)
-        client.trigger_incident(service_key,
+        client.trigger_incident('46056193083c41d799ea1631381a161e',
                                 'Testing new',
                                 incident_key=1)
 
